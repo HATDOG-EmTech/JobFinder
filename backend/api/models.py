@@ -40,7 +40,7 @@ class JobPosting(models.Model):
     def __str__(self):
         return self.job_title
 
-class Application(models.Model):
+class Applications(models.Model):
     APPLICATION_STATUS_CHOICES = [
         ('Applied', 'Applied'),
         ('Under Review', 'Under Review'),
@@ -52,16 +52,21 @@ class Application(models.Model):
     application_status = models.CharField(max_length=12, choices=APPLICATION_STATUS_CHOICES)
     date = models.DateField()
 
-    # (1): di ko alam kung ano ilalagay sa return at di ko rin alam kung pano sa foreign key since id sya #
+    def __str__(self):
+        return self.date
 
 class Links(models.Model):
     portfolio = models.TextField()
     linkedin = models.TextField()
     github = models.TextField()
 
-    # (1) #
+    def __str__(self):
+        return self.portfolio
 
 class Bookmark(models.Model):
     favorite = models.BooleanField
 
-    # (1) #
+    def __str__(self):
+        return self.favorite
+    
+    # ewan ko kung tama mga return ko #
