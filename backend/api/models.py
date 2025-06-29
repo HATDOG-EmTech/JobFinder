@@ -39,3 +39,29 @@ class JobPosting(models.Model):
 
     def __str__(self):
         return self.job_title
+
+class Application(models.Model):
+    APPLICATION_STATUS_CHOICES = [
+        ('Applied', 'Applied'),
+        ('Under Review', 'Under Review'),
+        ('Interview', 'Interview'),
+        ('Accepted', 'Accepted'),
+        ('Rejected', 'Rejected'),
+    ]
+
+    application_status = models.CharField(max_length=12, choices=APPLICATION_STATUS_CHOICES)
+    date = models.DateField()
+
+    # (1): di ko alam kung ano ilalagay sa return at di ko rin alam kung pano sa foreign key since id sya #
+
+class Links(models.Model):
+    portfolio = models.TextField()
+    linkedin = models.TextField()
+    github = models.TextField()
+
+    # (1) #
+
+class Bookmark(models.Model):
+    favorite = models.BooleanField
+
+    # (1) #
