@@ -1,72 +1,84 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-from django.db import models
 
+# Custom user model
 class CustomUser(AbstractUser):
-    username = models.CharField(max_length=150, blank=True, null=True, unique=False)
     email = models.EmailField(unique=True)
-    USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = []
+
+    USERNAME_FIELD = 'username'  # Default
+    REQUIRED_FIELDS = ['email']  # Email is required in addition to username
 
     def __str__(self):
-        return self.email
+        return self.username
 
-
+# Job Posting Model
 class JobPosting(models.Model):
-    JOB_SETUP_CHOICES = [
-        ('Onsite', 'Onsite'),
-        ('Remote', 'Remote'),
-        ('Hybrid', 'Hybrid'),
-    ]
+    JOB_SETUP_CHOICES = {
+        'Onsite': 'Onsite',
+        'Remote': 'Remote',
+        'Hybrid': 'Hybrid' }
 
-    JOB_TYPE_CHOICES = [
-        ('Full-Time', 'Full-Time'),
-        ('Part-Time', 'Part-Time'),
-        ('Contract', 'Contract'),
-        ('Internship', 'Internship'),
-    ]
+    JOB_TYPE_CHOICES = {
+        'Full-Time': 'Full-Time',
+        'Part-Time': 'Part-Time',
+        'Contract': 'Contract',
+        'Internship': 'Internship'}
 
     job_title = models.CharField(max_length=255)
     job_company = models.CharField(max_length=100)
-    job_setup = models.CharField(max_length=10 , choices=JOB_SETUP_CHOICES)
+    job_setup = models.CharField(max_length=10, choices=JOB_SETUP_CHOICES)
     job_type = models.CharField(max_length=15, choices=JOB_TYPE_CHOICES)
     job_salary = models.DecimalField(max_digits=10, decimal_places=2)
-    job_description = models.CharField()
+    job_description = models.TextField()
     job_requirements = models.TextField()
     job_benefits = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
-    author = models.ForeignKey(AbstractUser, on_delete=models.CASCADE, related_name='jobposting')
+    author = models.ForeignKey('CustomUser', on_delete=models.CASCADE, related_name='job_postings')
 
     def __str__(self):
-        return self.job_title
+        return f"{self.job_title} at {self.job_company}"
 
+
+# Applications Model
 class Applications(models.Model):
-    APPLICATION_STATUS_CHOICES = [
-        ('Applied', 'Applied'),
-        ('Under Review', 'Under Review'),
-        ('Interview', 'Interview'),
-        ('Accepted', 'Accepted'),
-        ('Rejected', 'Rejected'),
-    ]
+    STATUS_CHOICES = {
+        'Applied': 'Applied',
+        'Under Review': 'Under Review',
+        'Interview': 'Interview',
+        'Accepted': 'Accepted',
+        'Rejected': 'Rejected'}
 
-    application_status = models.CharField(max_length=12, choices=APPLICATION_STATUS_CHOICES)
+    user = models.ForeignKey('CustomUser', on_delete=models.CASCADE, related_name='applications')
+    job = models.ForeignKey(JobPosting, on_delete=models.CASCADE, related_name='applications')
+    application_status = models.CharField(max_length=20, choices=STATUS_CHOICES)
     date = models.DateField()
 
-    def __str__(self):
-        return self.date
+    class Meta:
+        unique_together = ('user', 'job')
 
+    def __str__(self):
+        return f"{self.user.email} applied for {self.job.job_title}"
+
+
+# Links Model
 class Links(models.Model):
-    portfolio = models.TextField()
-    linkedin = models.TextField()
-    github = models.TextField()
+    user = models.OneToOneField('CustomUser', on_delete=models.CASCADE, related_name='links')
+    portfolio = models.URLField(max_length=500, blank=True)
+    linkedin = models.URLField(max_length=500, blank=True)
+    github = models.URLField(max_length=500, blank=True)
 
     def __str__(self):
-        return self.portfolio
+        return f"Links for {self.user.email}"
 
+
+# Bookmark Model
 class Bookmark(models.Model):
-    favorite = models.BooleanField
+    user = models.ForeignKey('CustomUser', on_delete=models.CASCADE, related_name='bookmarks')
+    job = models.ForeignKey(JobPosting, on_delete=models.CASCADE, related_name='bookmarked_by')
+    favorite = models.BooleanField(default=True)
+
+    class Meta:
+        unique_together = ('user', 'job')
 
     def __str__(self):
-        return self.favorite
-    
-    # ewan ko kung tama mga return ko #
+        return f"{self.user.email} bookmarked {self.job.job_title}"

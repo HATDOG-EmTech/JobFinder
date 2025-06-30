@@ -1,36 +1,43 @@
-from django.shortcuts import render
-from django.contrib.auth.models import User
 from rest_framework import generics
-from .serializers import UserSerializer, JobSerializer
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from .models import JobPosting
+from .serializers import UserSerializer, JobSerializer
+from .models import JobPosting, CustomUser
 
-#job application create function
+
+# Job create and list view
 class JobPostingCreate(generics.ListCreateAPIView):
     serializer_class = JobSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        user = self.request.user
-        return JobPosting.objects.filter(author=user)
-    
+        return JobPosting.objects.filter(author=self.request.user)
+
     def perform_create(self, serializer):
         if serializer.is_valid():
             serializer.save(author=self.request.user)
         else:
-            print(serializer.errors)
-    
-#Job Delete Function
+            print (serializer.errors)
+
+# Job delete view
 class JobDelete(generics.DestroyAPIView):
     serializer_class = JobSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        user = self.request.user
-        return JobPosting.objects.filter(author=user)
+        return JobPosting.objects.filter(author=self.request.user)
 
-#Create User Function
+# User registration view
 class CreateUserView(generics.CreateAPIView):
-    queryset = User.objects.all()
+    queryset = CustomUser.objects.all()
     serializer_class = UserSerializer
     permission_classes = [AllowAny]
+
+
+"""class UserDelete(generics.DestroyAPIView):
+    serializer_class = JobSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return CustomUser.objects.filter(author=self.request.user)
+"""
+
