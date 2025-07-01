@@ -3,10 +3,24 @@ from django.contrib.auth.models import AbstractUser
 
 # Custom user model
 class CustomUser(AbstractUser):
-    email = models.EmailField(unique=True)
+    GENDER_CHOICES = {
+        'Male': 'Male',
+        'Female': 'Female',
+        'Others': 'Others',
+        'Prefer not to Say': 'Prefer not to Say'}
 
-    USERNAME_FIELD = 'username'  # Default
-    REQUIRED_FIELDS = ['email']  # Email is required in addition to username
+    email = models.EmailField(unique=True)
+    gender = models.CharField(max_length=18, choices=GENDER_CHOICES, blank=True)
+    mobile = models.CharField(max_length=11)
+    location = models.CharField(max_length=100)
+    user_title = models.CharField(max_length=30, blank=True)
+    bio = models.CharField(max_length=500, blank=True)
+    skills = models.CharField(max_length=500, blank=True)
+    linkedin = models.URLField(max_length=500, blank=True)
+    github = models.URLField(max_length=500, blank=True)
+
+    USERNAME_FIELD = 'username' 
+    REQUIRED_FIELDS = ['email'] 
 
     def __str__(self):
         return self.username
@@ -26,9 +40,11 @@ class JobPosting(models.Model):
 
     job_title = models.CharField(max_length=255)
     job_company = models.CharField(max_length=100)
+    job_location = models.CharField(max_length=100)
     job_setup = models.CharField(max_length=10, choices=JOB_SETUP_CHOICES)
     job_type = models.CharField(max_length=15, choices=JOB_TYPE_CHOICES)
-    job_salary = models.DecimalField(max_digits=10, decimal_places=2)
+    min_salary= models.DecimalField(max_digits=10, decimal_places=2)
+    max_salary= models.DecimalField(max_digits=10, decimal_places=2)
     job_description = models.TextField()
     job_requirements = models.TextField()
     job_benefits = models.TextField()
@@ -59,26 +75,3 @@ class Applications(models.Model):
     def __str__(self):
         return f"{self.user.email} applied for {self.job.job_title}"
 
-
-# Links Model
-class Links(models.Model):
-    user = models.OneToOneField('CustomUser', on_delete=models.CASCADE, related_name='links')
-    portfolio = models.URLField(max_length=500, blank=True)
-    linkedin = models.URLField(max_length=500, blank=True)
-    github = models.URLField(max_length=500, blank=True)
-
-    def __str__(self):
-        return f"Links for {self.user.email}"
-
-
-# Bookmark Model
-class Bookmark(models.Model):
-    user = models.ForeignKey('CustomUser', on_delete=models.CASCADE, related_name='bookmarks')
-    job = models.ForeignKey(JobPosting, on_delete=models.CASCADE, related_name='bookmarked_by')
-    favorite = models.BooleanField(default=True)
-
-    class Meta:
-        unique_together = ('user', 'job')
-
-    def __str__(self):
-        return f"{self.user.email} bookmarked {self.job.job_title}"
