@@ -1,0 +1,41 @@
+/* Job card container */
+.job-container {
+  background-color: #f9f9f9;
+  border-left: 5px solid #007bff;
+  margin: 10px 0;
+  padding: 10px 15px;
+  border-radius: 5px;
+  font-family: Arial, sans-serif;
+}
+
+/* Job title */
+.job-title {
+  color: #333;
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+/* Job detail lines */
+.job-details,
+.job-salary {
+  color: #555;
+  margin: 4px 0;
+  font-size: 0.95rem;
+}
+
+/* Delete button */
+.delete-button {
+  background-color: #f44336; /* Red */
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: background-color 0.3s ease;
+}
+
+.delete-button:hover {
+  background-color: #d32f2f; /* Darker red */
+}

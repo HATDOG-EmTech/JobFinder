@@ -9,15 +9,20 @@ class CustomUser(AbstractUser):
         'Others': 'Others',
         'Prefer not to Say': 'Prefer not to Say'}
 
+    ROLE_CHOICES = {
+        'User': 'User',
+        'Admin': 'Admin'}
+
     email = models.EmailField(unique=True)
-    gender = models.CharField(max_length=18, choices=GENDER_CHOICES, blank=True)
+    gender = models.CharField(max_length=18, choices=GENDER_CHOICES)
     mobile = models.CharField(max_length=11)
     location = models.CharField(max_length=100)
-    user_title = models.CharField(max_length=30, blank=True)
+    user_title = models.CharField(max_length=30)
     bio = models.CharField(max_length=500, blank=True)
     skills = models.CharField(max_length=500, blank=True)
     linkedin = models.URLField(max_length=500, blank=True)
     github = models.URLField(max_length=500, blank=True)
+    role = models.CharField(max_length=5, choices=ROLE_CHOICES, default='User')
 
     USERNAME_FIELD = 'username' 
     REQUIRED_FIELDS = ['email'] 
@@ -58,20 +63,22 @@ class JobPosting(models.Model):
 # Applications Model
 class Applications(models.Model):
     STATUS_CHOICES = {
-        'Applied': 'Applied',
         'Under Review': 'Under Review',
         'Interview': 'Interview',
         'Accepted': 'Accepted',
-        'Rejected': 'Rejected'}
+        'Rejected': 'Rejected',
+    }
 
     user = models.ForeignKey('CustomUser', on_delete=models.CASCADE, related_name='applications')
     job = models.ForeignKey(JobPosting, on_delete=models.CASCADE, related_name='applications')
-    application_status = models.CharField(max_length=20, choices=STATUS_CHOICES)
-    date = models.DateField()
+    application_status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Under Review')
+    date = models.DateField(auto_now_add=True)
 
     class Meta:
+
         unique_together = ('user', 'job')
 
     def __str__(self):
         return f"{self.user.email} applied for {self.job.job_title}"
+
 
