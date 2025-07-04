@@ -17,7 +17,7 @@ class CustomUser(AbstractUser):
     gender = models.CharField(max_length=18, choices=GENDER_CHOICES)
     mobile = models.CharField(max_length=11)
     location = models.CharField(max_length=100)
-    user_title = models.CharField(max_length=30)
+    user_title = models.CharField(max_length=30, blank=True)
     bio = models.CharField(max_length=500, blank=True)
     skills = models.CharField(max_length=500, blank=True)
     linkedin = models.URLField(max_length=500, blank=True)

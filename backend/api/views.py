@@ -1,7 +1,10 @@
-from rest_framework import generics
+from rest_framework.response import Response
+from rest_framework.exceptions import NotFound
+from rest_framework import generics, serializers
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from .serializers import UserSerializer, JobSerializer, ApplicationSerializer, RegisterSerializer, ForgotPasswordSerializer, ProfileSerializer, JobPostingSerializer
+from .serializers import UserSerializer, JobSerializer, ApplicationSerializer, RegisterSerializer, ForgotPasswordSerializer, ProfileSerializer, JobSearchSerializer, ApplicationStatusUpdateSerializer
 from .models import JobPosting, CustomUser, Applications
+from django.db.models import Q
 
 
 # JOB CREATE AND VIEW
@@ -52,11 +55,13 @@ class JobDelete(generics.DestroyAPIView):
     def perform_destroy(self, instance):
         instance.delete()
 
+
 # User registration view
 class CreateUserView(generics.CreateAPIView):
     queryset = CustomUser.objects.all()
     serializer_class = RegisterSerializer
     permission_classes = [AllowAny]
+
 
 # User profile info view
 class UserProfileView(generics.RetrieveUpdateAPIView):
@@ -68,7 +73,7 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
 
 
 #User update info
-class UserUpdate(generics.RetrieveUpdateAPIView):
+class UserProfileUpdate(generics.RetrieveUpdateAPIView):
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated]
 
@@ -95,24 +100,62 @@ class ForgotPassword(generics.GenericAPIView):
         serializer = self.get_serializer(data=request.data)
 
         if serializer.is_valid():
-            self.perform_update(serializer)
-        else:
-            print(serializer.errors)
+            serializer.save()
+            return Response({"message": "Password reset successful."}, status=status.HTTP_200_OK)
 
-    def perform_update(self, serializer):
-        serializer.save()
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+#Search for user profile
+class SearchUserProfileView(generics.ListAPIView):
+    serializer_class = ProfileSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        query = self.request.query_params.get('q', '').strip()
+
+        if not query:
+            raise NotFound("Search query cannot be empty.")
+
+        # Step 1: Get all users matching username or email
+        results = CustomUser.objects.filter(
+            Q(username__icontains=query) | Q(email__icontains=query)
+        )
+
+        # Step 2: Apply role logic
+        user = self.request.user
+        if user.role.lower() != 'admin':
+            # regular users: exclude admins and themselves
+            results = results.filter(role__iexact='user').exclude(id=user.id)
+
+        if not results.exists():
+            raise NotFound("User not found.")
+
+        return results
 
 
 #Application View and create
-class ApplicationView(generics.ListCreateAPIView):
+class ApplicationCreateandView(generics.ListCreateAPIView):
     serializer_class = ApplicationSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        # Only return the authenticated user's applications
         return Applications.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        user = self.request.user
+        job = serializer.validated_data['job']
+
+        # ✅ Check 1: Prevent duplicate applications
+        if Applications.objects.filter(user=user, job=job).exists():
+            raise serializers.ValidationError("You have already applied to this job.")
+
+        # ✅ Check 2: Prevent applying to own job post
+        if job.author == user:  # 'author' must exist in your JobPosting model
+            raise serializers.ValidationError("You cannot apply to your own job posting.")
+
+        # ✅ Save the application
+        serializer.save(user=user)
 
 #Application view for the job poster
 class EmployerApplicationView(generics.ListAPIView):
@@ -121,6 +164,20 @@ class EmployerApplicationView(generics.ListAPIView):
 
     def get_queryset(self):
         return Applications.objects.filter(job__author=self.request.user)
+    
+
+class UpdateApplicationStatusView(generics.UpdateAPIView):
+    serializer_class = ApplicationStatusUpdateSerializer
+    permission_classes = [IsAuthenticated]
+    queryset = Applications.objects.all()
+
+    def get_object(self):
+        application = super().get_object()
+
+        if application.job.author != self.request.user:
+            raise PermissionDenied("You are not allowed to modify this application.")
+
+        return application    
 
 
 #Filter of application
@@ -156,7 +213,7 @@ class UpdateApplicationStatusView(generics.UpdateAPIView):
 
 #Search engine
 class SearchJobPostingView(generics.ListAPIView):
-    serializer_class = JobPostingSerializer
+    serializer_class = JobSearchSerializer
     permission_classes = [AllowAny]
 
     def get_queryset(self):

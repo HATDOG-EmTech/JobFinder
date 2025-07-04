@@ -1,23 +1,6 @@
 from rest_framework import serializers
 from .models import JobPosting, Applications, CustomUser
 
-#class UserSerializer(serializers.ModelSerializer):
-#    class Meta:
-#        model = CustomUser
-#        fields = ['id', 'username', 'email', 'password']
-#        extra_kwargs = {
-#            'password': {'write_only': True}
-#        }
-
-#    def create(self, validated_data):
-#        user = CustomUser.objects.create_user(
-#            username=validated_data['username'],
-#            email=validated_data['email'],
-#            password=validated_data['password']
-#        )
-#        return user
-
-
 class RegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
@@ -62,23 +45,18 @@ class UserSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'username', 'email']  # prevent updating these from here
 
 
-
+#search profile of other user
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        # Explicitly list only the fields you want to expose
         fields = [
             'username', 'email', 'first_name', 'last_name', 'gender',
             'mobile', 'location', 'user_title', 'bio', 'skills',
-            'linkedin', 'github', 'role'
+            'linkedin', 'github'
         ]
-        extra_kwargs = {
-            'email': {'read_only': True},  # Optional: prevent email editing
-        }
+        read_only_fields = fields  # all fields are read-only
 
-
-
-
+#changing passwords
 class ForgotPasswordSerializer(serializers.Serializer):
     username = serializers.CharField()
     email = serializers.EmailField()
@@ -102,7 +80,7 @@ class ForgotPasswordSerializer(serializers.Serializer):
         user.save()
         return user
 
-
+#jobs
 class JobSerializer(serializers.ModelSerializer):
     class Meta:
         model = JobPosting
@@ -130,7 +108,16 @@ class JobSerializer(serializers.ModelSerializer):
 class JobSearchSerializer(serializers.ModelSerializer):
     class Meta:
         model = JobPosting
-        fields = ['id', 'job_title', 'job_company', 'job_location', 'job_description']
+        fields = ['job_title',
+            'job_company',
+            'job_location',
+            'job_setup',
+            'job_type',
+            'min_salary',
+            'max_salary',
+            'job_description',
+            'job_requirements',
+            'job_benefits']
 
 
 #class ApplicationSerializer(serializers.ModelSerializer):
@@ -148,6 +135,7 @@ class JobSearchSerializer(serializers.ModelSerializer):
 #            'date': {'read_only': True}
 #        }
 
+#application for job
 class ApplicationSerializer(serializers.ModelSerializer):
     job_title = serializers.CharField(source='job.job_title', read_only=True)
     email = serializers.CharField(source='user.email', read_only=True)
