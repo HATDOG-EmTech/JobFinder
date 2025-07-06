@@ -5,14 +5,16 @@ class RegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = [
-            'username', 'email', 'password',
+            'username', 'email', 'password', 'first_name', 'last_name',
             'gender', 'mobile', 'location',
             'user_title', 'bio', 'skills',
             'linkedin', 'github', 'role'
         ]
         extra_kwargs = {
             'password': {'write_only': True},
-            'role': {'default': 'user'}
+            'role': {'default': 'user'},
+            'first_name': {'required': True},
+            'last_name': {'required': True}
         }
 
     def create(self, validated_data):
@@ -20,6 +22,8 @@ class RegisterSerializer(serializers.ModelSerializer):
             username=validated_data['username'],
             email=validated_data['email'],
             password=validated_data['password'],
+            first_name=validated_data.get('first_name', ''),
+            last_name=validated_data.get('last_name', ''),
             gender=validated_data.get('gender', ''),
             mobile=validated_data.get('mobile', ''),
             location=validated_data.get('location', ''),
@@ -31,7 +35,7 @@ class RegisterSerializer(serializers.ModelSerializer):
             role=validated_data.get('role', 'user')
         )
         return user
- 
+
     
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -82,6 +86,8 @@ class ForgotPasswordSerializer(serializers.Serializer):
 
 #jobs
 class JobSerializer(serializers.ModelSerializer):
+    author_name = serializers.SerializerMethodField()
+    
     class Meta:
         model = JobPosting
         fields = [
@@ -97,18 +103,62 @@ class JobSerializer(serializers.ModelSerializer):
             'job_requirements',
             'job_benefits',
             'created_at',
-            'author'
+            'author',
+            'author_name'
         ]
         extra_kwargs = {
             'author': {'read_only': True}
         }
+    
+    def get_author_name(self, obj):
+        if obj.author.first_name and obj.author.last_name:
+            return f"{obj.author.first_name} {obj.author.last_name}"
+        return obj.author.username
+
+    def validate_job_title(self, value):
+        if len(value.strip()) < 3:
+            raise serializers.ValidationError("Job title must be at least 3 characters long.")
+        return value.strip()
+
+    def validate_job_company(self, value):
+        if len(value.strip()) < 2:
+            raise serializers.ValidationError("Company name must be at least 2 characters long.")
+        return value.strip()
+
+    def validate_min_salary(self, value):
+        # Handle both string and numeric inputs
+        if isinstance(value, str):
+            if not value.strip():
+                raise serializers.ValidationError("Minimum salary is required.")
+            return value.strip()
+        else:
+            # Convert non-string values to string
+            if not value:
+                raise serializers.ValidationError("Minimum salary is required.")
+            return str(value)
+
+    def validate_max_salary(self, value):
+        # Handle both string and numeric inputs
+        if isinstance(value, str):
+            if not value.strip():
+                raise serializers.ValidationError("Maximum salary is required.")
+            return value.strip()
+        else:
+            # Convert non-string values to string
+            if not value:
+                raise serializers.ValidationError("Maximum salary is required.")
+            return str(value)
 
 
 #Search Engine
 class JobSearchSerializer(serializers.ModelSerializer):
+    author_name = serializers.SerializerMethodField()
+    
     class Meta:
         model = JobPosting
-        fields = ['job_title',
+        fields = [
+            'id',
+            'job_title',
             'job_company',
             'job_location',
             'job_setup',
@@ -117,7 +167,15 @@ class JobSearchSerializer(serializers.ModelSerializer):
             'max_salary',
             'job_description',
             'job_requirements',
-            'job_benefits']
+            'job_benefits',
+            'created_at',
+            'author_name'
+        ]
+    
+    def get_author_name(self, obj):
+        if obj.author.first_name and obj.author.last_name:
+            return f"{obj.author.first_name} {obj.author.last_name}"
+        return obj.author.username
 
 
 #class ApplicationSerializer(serializers.ModelSerializer):
@@ -157,5 +215,3 @@ class ApplicationStatusUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Applications
         fields = ['id', 'applicant', 'job_title', 'application_status', 'date']
-
-

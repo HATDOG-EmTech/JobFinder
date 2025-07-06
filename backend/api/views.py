@@ -1,6 +1,6 @@
 from rest_framework.response import Response
-from rest_framework.exceptions import NotFound
-from rest_framework import generics, serializers
+from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
+from rest_framework import generics, serializers, status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .serializers import UserSerializer, JobSerializer, ApplicationSerializer, RegisterSerializer, ForgotPasswordSerializer, ProfileSerializer, JobSearchSerializer, ApplicationStatusUpdateSerializer
 from .models import JobPosting, CustomUser, Applications
@@ -13,10 +13,30 @@ class JobPostingListCreate(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return JobPosting.objects.all()
+        return JobPosting.objects.all().order_by('-created_at')
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        # Create the job posting
+        job = serializer.save(author=request.user)
+        
+        # Return success response with job data
+        return Response({
+            'message': 'Job posted successfully',
+            'job': JobSerializer(job).data
+        }, status=status.HTTP_201_CREATED)
+
+
+# JOB DETAIL VIEW - Added this new view
+class JobPostingDetail(generics.RetrieveAPIView):
+    serializer_class = JobSerializer
+    permission_classes = [AllowAny]  # Allow anyone to view job details
+    queryset = JobPosting.objects.all()
 
 
 #JOB POSTING UPDATE API
@@ -62,6 +82,26 @@ class CreateUserView(generics.CreateAPIView):
     serializer_class = RegisterSerializer
     permission_classes = [AllowAny]
 
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        # Create the user
+        user = serializer.save()
+        
+        # Return success response with user data
+        return Response({
+            'message': 'User created successfully',
+            'user': {
+                'id': user.id,
+                'username': user.username,
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'role': user.role
+            }
+        }, status=status.HTTP_201_CREATED)
+
 
 # User profile info view
 class UserProfileView(generics.RetrieveUpdateAPIView):
@@ -95,6 +135,7 @@ class UserProfileUpdate(generics.RetrieveUpdateAPIView):
 #Forget Password
 class ForgotPassword(generics.GenericAPIView):
     serializer_class = ForgotPasswordSerializer
+    permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -218,5 +259,4 @@ class SearchJobPostingView(generics.ListAPIView):
 
     def get_queryset(self):
         query = self.request.query_params.get('q', '')
-        return JobPosting.objects.filter(job_title__icontains=query)
-    
+        return JobPosting.objects.filter(job_title__icontains=query).order_by('-created_at')

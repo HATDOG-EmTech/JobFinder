@@ -13,6 +13,8 @@ class CustomUser(AbstractUser):
         'User': 'User',
         'Admin': 'Admin'}
 
+    first_name = models.CharField(max_length=30)
+    last_name = models.CharField(max_length=30)
     email = models.EmailField(unique=True)
     gender = models.CharField(max_length=18, choices=GENDER_CHOICES)
     mobile = models.CharField(max_length=11)
