@@ -9,6 +9,7 @@ import TermsModal from "./TermsModal"
 const Register = ({ onRegister }) => {
   const navigate = useNavigate()
   const [formData, setFormData] = useState({
+    username: "",
     firstName: "",
     lastName: "",
     email: "",
@@ -451,6 +452,14 @@ const Register = ({ onRegister }) => {
     const newErrors = {}
 
     if (step === 1) {
+      if (!formData.username.trim()) {
+        newErrors.username = "Username is required"
+      } else if (formData.username.trim().length < 3) {
+        newErrors.username = "Username must be at least 3 characters"
+      } else if (!/^[a-zA-Z0-9_]+$/.test(formData.username.trim())) {
+        newErrors.username = "Username can only contain letters, numbers, and underscores"
+      }
+
       if (!formData.firstName.trim()) {
         newErrors.firstName = "First name is required"
       } else if (formData.firstName.trim().length < 2) {
@@ -538,8 +547,25 @@ const Register = ({ onRegister }) => {
     try {
       console.log("Registration attempt with:", formData)
 
+      // Prepare the data for the Django API
+      const registrationData = {
+        username: formData.username.trim(),
+        email: formData.email.trim(),
+        password: formData.password,
+        firstName: formData.firstName.trim(),
+        lastName: formData.lastName.trim(),
+        gender: formData.gender,
+        mobile: formData.mobile,
+        location: formData.location,
+        userTitle: formData.userTitle,
+        bio: formData.bio,
+        skills: formData.skills,
+        linkedin: formData.linkedin,
+        github: formData.github,
+      }
+
       // Call the Django API
-      const response = await authAPI.register(formData)
+      const response = await authAPI.register(registrationData)
 
       console.log("Registration successful:", response)
 
@@ -575,7 +601,13 @@ const Register = ({ onRegister }) => {
       const errorMessage = error.message || "Registration failed. Please try again."
 
       // Handle specific field errors
-      if (errorMessage.includes("username:") || errorMessage.includes("email:")) {
+      if (errorMessage.includes("username:")) {
+        if (errorMessage.toLowerCase().includes("already exists") || errorMessage.toLowerCase().includes("unique")) {
+          setErrors({ username: "This username is already taken" })
+        } else {
+          setErrors({ username: errorMessage.replace("username:", "").trim() })
+        }
+      } else if (errorMessage.includes("email:")) {
         if (errorMessage.toLowerCase().includes("already exists") || errorMessage.toLowerCase().includes("unique")) {
           setErrors({ email: "An account with this email already exists" })
         } else {
@@ -642,6 +674,34 @@ const Register = ({ onRegister }) => {
       <p style={registerStyles.subtitle}>Enter your basic information to get started</p>
 
       {errors.submit && <div style={{ ...registerStyles.alertBox, ...registerStyles.errorAlert }}>{errors.submit}</div>}
+
+      <div style={registerStyles.formGroup}>
+        <label htmlFor="username" style={registerStyles.label}>
+          Username *
+        </label>
+        <input
+          type="text"
+          id="username"
+          placeholder="johndoe123"
+          value={formData.username}
+          onChange={(e) => handleInputChange("username", e.target.value)}
+          required
+          style={{
+            ...registerStyles.input,
+            ...(errors.username ? registerStyles.inputError : {}),
+          }}
+          onFocus={(e) => {
+            if (!errors.username) {
+              Object.assign(e.target.style, registerStyles.inputFocus)
+            }
+          }}
+          onBlur={(e) => {
+            e.target.style.borderColor = errors.username ? "#ef4444" : "#d1d5db"
+            e.target.style.boxShadow = errors.username ? "0 0 0 3px rgba(239, 68, 68, 0.1)" : "none"
+          }}
+        />
+        {errors.username && <span style={registerStyles.errorText}>{errors.username}</span>}
+      </div>
 
       {/* First Name and Last Name Row */}
       <div style={registerStyles.formRow}>

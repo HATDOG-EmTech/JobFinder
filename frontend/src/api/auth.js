@@ -122,7 +122,7 @@ export const authAPI = {
 
     // Clean and validate the data before sending
     const registrationPayload = {
-      username: userData.email.trim().toLowerCase(), // Using email as username
+      username: userData.username ? userData.username.trim() : userData.email.trim().toLowerCase(),
       email: userData.email.trim().toLowerCase(),
       password: userData.password,
       first_name: userData.firstName.trim(),
@@ -135,7 +135,7 @@ export const authAPI = {
       skills: userData.skills || "",
       linkedin: userData.linkedin || "",
       github: userData.github || "",
-      role: "User", // Changed from "user" to "User" to match Django model choices
+      role: "User",
     }
 
     console.log("Sending registration payload:", registrationPayload)
@@ -147,14 +147,38 @@ export const authAPI = {
   },
 
   // Login user
-  login: async (email, password) => {
-    return await apiRequest("/auth/login/", {
-      method: "POST",
-      body: JSON.stringify({
-        username: email, // Django expects username field
-        password: password,
-      }),
-    })
+  login: async (usernameOrEmail, password) => {
+    // Try to determine if it's an email or username
+    const isEmail = /\S+@\S+\.\S+/.test(usernameOrEmail)
+
+    // First try with the provided value as username
+    try {
+      return await apiRequest("/auth/login/", {
+        method: "POST",
+        body: JSON.stringify({
+          username: usernameOrEmail,
+          password: password,
+        }),
+      })
+    } catch (error) {
+      // If it's an email and the first attempt failed, try with email field
+      if (isEmail) {
+        try {
+          return await apiRequest("/auth/login/", {
+            method: "POST",
+            body: JSON.stringify({
+              email: usernameOrEmail,
+              password: password,
+            }),
+          })
+        } catch (emailError) {
+          // If both fail, throw the original error
+          throw error
+        }
+      }
+      // If it's not an email, just throw the original error
+      throw error
+    }
   },
 
   // Get current user profile

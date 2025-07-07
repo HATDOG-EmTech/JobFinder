@@ -8,7 +8,7 @@ import TermsModal from "./TermsModal"
 
 const Login = ({ onLogin }) => {
   const navigate = useNavigate()
-  const [email, setEmail] = useState("")
+  const [usernameOrEmail, setUsernameOrEmail] = useState("")
   const [password, setPassword] = useState("")
   const [rememberMe, setRememberMe] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -378,10 +378,17 @@ const Login = ({ onLogin }) => {
   const validateForm = () => {
     const newErrors = {}
 
-    if (!email.trim()) {
-      newErrors.email = "Email is required"
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = "Please enter a valid email address"
+    if (!usernameOrEmail.trim()) {
+      newErrors.usernameOrEmail = "Username is required"
+    } else {
+      // Check if it's an email format
+      const isEmail = /\S+@\S+\.\S+/.test(usernameOrEmail)
+      // Check if it's a valid username format (letters, numbers, underscores, 3+ chars)
+      const isUsername = /^[a-zA-Z0-9_]{3,}$/.test(usernameOrEmail)
+
+      if (!isEmail && !isUsername) {
+        newErrors.usernameOrEmail = "Please enter a valid username"
+      }
     }
 
     if (!password) {
@@ -434,10 +441,10 @@ const Login = ({ onLogin }) => {
     setErrors({})
 
     try {
-      console.log("Login attempt with:", { email, password: "[HIDDEN]", rememberMe })
+      console.log("Login attempt with:", { usernameOrEmail, password: "[HIDDEN]", rememberMe })
 
       // Call the Django API
-      const response = await authAPI.login(email, password)
+      const response = await authAPI.login(usernameOrEmail, password)
 
       // Store tokens if using JWT
       if (response.access) {
@@ -467,9 +474,9 @@ const Login = ({ onLogin }) => {
       localStorage.removeItem("lockoutTime")
 
       if (rememberMe) {
-        localStorage.setItem("rememberedEmail", email)
+        localStorage.setItem("rememberedCredentials", usernameOrEmail)
       } else {
-        localStorage.removeItem("rememberedEmail")
+        localStorage.removeItem("rememberedCredentials")
       }
 
       onLogin(userData)
@@ -478,9 +485,9 @@ const Login = ({ onLogin }) => {
 
       // Handle specific error messages from Django
       if (error.message.includes("Invalid credentials") || error.message.includes("password")) {
-        setErrors({ password: "Invalid email or password" })
+        setErrors({ password: "Invalid username/email or password" })
       } else if (error.message.includes("email") || error.message.includes("username")) {
-        setErrors({ email: "No account found with this email address" })
+        setErrors({ usernameOrEmail: "No account found with this username" })
       } else {
         setErrors({ submit: error.message || "Login failed. Please try again." })
       }
@@ -496,8 +503,8 @@ const Login = ({ onLogin }) => {
       setErrors((prev) => ({ ...prev, [field]: undefined }))
     }
 
-    if (field === "email") {
-      setEmail(value)
+    if (field === "usernameOrEmail") {
+      setUsernameOrEmail(value)
     } else if (field === "password") {
       setPassword(value)
     }
@@ -507,16 +514,16 @@ const Login = ({ onLogin }) => {
     navigate("/forgot-password")
   }
 
-  const loadRememberedEmail = () => {
-    const rememberedEmail = localStorage.getItem("rememberedEmail")
-    if (rememberedEmail) {
-      setEmail(rememberedEmail)
+  const loadRememberedCredentials = () => {
+    const rememberedCredentials = localStorage.getItem("rememberedCredentials")
+    if (rememberedCredentials) {
+      setUsernameOrEmail(rememberedCredentials)
       setRememberMe(true)
     }
   }
 
   useEffect(() => {
-    loadRememberedEmail()
+    loadRememberedCredentials()
   }, [])
 
   const getRemainingLockoutTime = () => {
@@ -591,32 +598,32 @@ const Login = ({ onLogin }) => {
 
           <form onSubmit={handleSubmit}>
             <div style={loginStyles.formGroup}>
-              <label htmlFor="email" style={loginStyles.label}>
-                Email
+              <label htmlFor="usernameOrEmail" style={loginStyles.label}>
+                Username
               </label>
               <input
-                type="email"
-                id="email"
-                placeholder="name@example.com"
-                value={email}
-                onChange={(e) => handleInputChange("email", e.target.value)}
+                type="text"
+                id="usernameOrEmail"
+                placeholder="example123"
+                value={usernameOrEmail}
+                onChange={(e) => handleInputChange("usernameOrEmail", e.target.value)}
                 disabled={isLocked}
                 required
                 style={{
                   ...loginStyles.input,
-                  ...(errors.email ? loginStyles.inputError : {}),
+                  ...(errors.usernameOrEmail ? loginStyles.inputError : {}),
                 }}
                 onFocus={(e) => {
-                  if (!errors.email) {
+                  if (!errors.usernameOrEmail) {
                     Object.assign(e.target.style, loginStyles.inputFocus)
                   }
                 }}
                 onBlur={(e) => {
-                  e.target.style.borderColor = errors.email ? "#ef4444" : "#d1d5db"
-                  e.target.style.boxShadow = errors.email ? "0 0 0 3px rgba(239, 68, 68, 0.1)" : "none"
+                  e.target.style.borderColor = errors.usernameOrEmail ? "#ef4444" : "#d1d5db"
+                  e.target.style.boxShadow = errors.usernameOrEmail ? "0 0 0 3px rgba(239, 68, 68, 0.1)" : "none"
                 }}
               />
-              {errors.email && <span style={loginStyles.errorText}>{errors.email}</span>}
+              {errors.usernameOrEmail && <span style={loginStyles.errorText}>{errors.usernameOrEmail}</span>}
             </div>
 
             <div style={loginStyles.formGroup}>

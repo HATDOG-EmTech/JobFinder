@@ -12,7 +12,6 @@ function ProfileContent({ user }) {
     l_name: "",
     email: "",
     username: "",
-    password: "",
     gender: "",
     mobile: "",
     location: "",
@@ -44,7 +43,6 @@ function ProfileContent({ user }) {
             l_name: userData.l_name || userData.last_name || "",
             email: userData.email || "",
             username: userData.username || "",
-            password: "",
             gender: userData.gender || "",
             mobile: userData.mobile || userData.phone || "",
             location: userData.location || "",
@@ -366,8 +364,37 @@ function ProfileContent({ user }) {
       setLoading(true)
       console.log("Saving profile data:", profileData)
 
-      const response = await authAPI.updateProfile(profileData)
+      // Prepare the data for the API call, ensuring first and last names are included
+      const updateData = {
+        ...profileData,
+        first_name: profileData.f_name, // Map f_name to first_name for API compatibility
+        last_name: profileData.l_name, // Map l_name to last_name for API compatibility
+      }
+
+      const response = await authAPI.updateProfile(updateData)
       console.log("Profile update response:", response)
+
+      // Update the local state with the response data if available
+      if (response && (response.data || response)) {
+        const updatedData = response.data || response
+        setProfileData((prev) => ({
+          ...prev,
+          f_name: updatedData.f_name || updatedData.first_name || prev.f_name,
+          l_name: updatedData.l_name || updatedData.last_name || prev.l_name,
+          // Update other fields as needed
+          email: updatedData.email || prev.email,
+          username: updatedData.username || prev.username,
+          mobile: updatedData.mobile || updatedData.phone || prev.mobile,
+          location: updatedData.location || prev.location,
+          user_title: updatedData.user_title || updatedData.title || prev.user_title,
+          bio: updatedData.bio || prev.bio,
+          skills: updatedData.skills || prev.skills,
+          linkedin: updatedData.linkedin || prev.linkedin,
+          github: updatedData.github || prev.github,
+          gender: updatedData.gender || prev.gender,
+          role: updatedData.role || prev.role,
+        }))
+      }
 
       setIsEditing(false)
       alert("Profile saved successfully!")
@@ -620,7 +647,7 @@ function ProfileContent({ user }) {
                 <h3 style={profileStyles.sectionTitle}>Profile Information</h3>
                 <div style={profileStyles.formGrid}>
                   <div style={profileStyles.formGroup}>
-                    <label style={profileStyles.label}>First Name</label>
+                    <label style={profileStyles.label}>First Name *</label>
                     <input
                       type="text"
                       value={profileData.f_name}
@@ -630,10 +657,12 @@ function ProfileContent({ user }) {
                         ...(isEditing ? {} : profileStyles.inputDisabled),
                       }}
                       disabled={!isEditing}
+                      required={isEditing}
+                      placeholder={isEditing ? "Enter your first name" : ""}
                     />
                   </div>
                   <div style={profileStyles.formGroup}>
-                    <label style={profileStyles.label}>Last Name</label>
+                    <label style={profileStyles.label}>Last Name *</label>
                     <input
                       type="text"
                       value={profileData.l_name}
@@ -643,6 +672,8 @@ function ProfileContent({ user }) {
                         ...(isEditing ? {} : profileStyles.inputDisabled),
                       }}
                       disabled={!isEditing}
+                      required={isEditing}
+                      placeholder={isEditing ? "Enter your last name" : ""}
                     />
                   </div>
                   <div style={profileStyles.formGroup}>
@@ -730,18 +761,6 @@ function ProfileContent({ user }) {
                       disabled={!isEditing}
                     />
                   </div>
-                  {isEditing && (
-                    <div style={profileStyles.formGroup}>
-                      <label style={profileStyles.label}>New Password</label>
-                      <input
-                        type="password"
-                        value={profileData.password}
-                        onChange={(e) => handleInputChange("password", e.target.value)}
-                        style={profileStyles.input}
-                        placeholder="Leave blank to keep current password"
-                      />
-                    </div>
-                  )}
                   <div style={profileStyles.formGroupFull}>
                     <label style={profileStyles.label}>Bio</label>
                     <textarea
