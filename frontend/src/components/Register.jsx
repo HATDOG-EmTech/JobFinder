@@ -456,25 +456,25 @@ const Register = ({ onRegister }) => {
         newErrors.username = "Username is required"
       } else if (formData.username.trim().length < 3) {
         newErrors.username = "Username must be at least 3 characters"
-      } else if (!/^[a-zA-Z0-9_]+$/.test(formData.username.trim())) {
-        newErrors.username = "Username can only contain letters, numbers, and underscores"
+      } else if (!/^[a-zA-Z0-9_]{3,20}$/.test(formData.username.trim())) {
+        newErrors.username = "Username must be 3-20 characters and contain only letters, numbers, and underscores"
       }
 
       if (!formData.firstName.trim()) {
         newErrors.firstName = "First name is required"
-      } else if (formData.firstName.trim().length < 2) {
-        newErrors.firstName = "First name must be at least 2 characters"
+      } else if (!/^[a-zA-Z\s]{2,30}$/.test(formData.firstName.trim())) {
+        newErrors.firstName = "First name must be 2-30 characters and contain only letters"
       }
 
       if (!formData.lastName.trim()) {
         newErrors.lastName = "Last name is required"
-      } else if (formData.lastName.trim().length < 2) {
-        newErrors.lastName = "Last name must be at least 2 characters"
+      } else if (!/^[a-zA-Z\s]{2,30}$/.test(formData.lastName.trim())) {
+        newErrors.lastName = "Last name must be 2-30 characters and contain only letters"
       }
 
       if (!formData.email.trim()) {
         newErrors.email = "Email is required"
-      } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      } else if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(formData.email.trim())) {
         newErrors.email = "Please enter a valid email address"
       }
 
@@ -482,8 +482,9 @@ const Register = ({ onRegister }) => {
         newErrors.password = "Password is required"
       } else if (formData.password.length < 8) {
         newErrors.password = "Password must be at least 8 characters long"
-      } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
-        newErrors.password = "Password must contain at least one uppercase letter, one lowercase letter, and one number"
+      } else if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(formData.password)) {
+        newErrors.password =
+          "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character"
       }
 
       if (!formData.confirmPassword) {
@@ -494,16 +495,26 @@ const Register = ({ onRegister }) => {
     }
 
     if (step === 2) {
-      if (formData.mobile && !/^\d{10,11}$/.test(formData.mobile.replace(/\D/g, ""))) {
+      if (!formData.gender) {
+        newErrors.gender = "Gender is required"
+      }
+
+      if (!formData.mobile.trim()) {
+        newErrors.mobile = "Mobile number is required"
+      } else if (!/^\d{10,11}$/.test(formData.mobile.replace(/\D/g, ""))) {
         newErrors.mobile = "Please enter a valid phone number"
       }
 
-      if (formData.linkedin && !formData.linkedin.includes("linkedin.com")) {
-        newErrors.linkedin = "Please enter a valid LinkedIn URL"
+      if (!formData.location.trim()) {
+        newErrors.location = "Location is required"
       }
 
-      if (formData.github && !formData.github.includes("github.com")) {
-        newErrors.github = "Please enter a valid GitHub URL"
+      if (formData.linkedin && !/^https:\/\/(www\.)?linkedin\.com\/in\/[a-zA-Z0-9-]+\/?$/.test(formData.linkedin)) {
+        newErrors.linkedin = "Please enter a valid LinkedIn profile URL"
+      }
+
+      if (formData.github && !/^https:\/\/(www\.)?github\.com\/[a-zA-Z0-9-]+\/?$/.test(formData.github)) {
+        newErrors.github = "Please enter a valid GitHub profile URL"
       }
     }
 
@@ -900,24 +911,30 @@ const Register = ({ onRegister }) => {
   const renderStep2 = () => (
     <>
       <h2 style={registerStyles.title}>Personal Information</h2>
-      <p style={registerStyles.subtitle}>Tell us more about yourself (optional)</p>
+      <p style={registerStyles.subtitle}>Tell us more about yourself</p>
 
       <div style={registerStyles.formRow}>
         <div>
           <label htmlFor="gender" style={registerStyles.label}>
-            Gender
+            Gender *
           </label>
           <select
             id="gender"
             value={formData.gender}
             onChange={(e) => handleInputChange("gender", e.target.value)}
-            style={registerStyles.select}
+            required
+            style={{
+              ...registerStyles.select,
+              ...(errors.gender ? registerStyles.inputError : {}),
+            }}
             onFocus={(e) => {
-              Object.assign(e.target.style, registerStyles.inputFocus)
+              if (!errors.gender) {
+                Object.assign(e.target.style, registerStyles.inputFocus)
+              }
             }}
             onBlur={(e) => {
-              e.target.style.borderColor = "#d1d5db"
-              e.target.style.boxShadow = "none"
+              e.target.style.borderColor = errors.gender ? "#ef4444" : "#d1d5db"
+              e.target.style.boxShadow = errors.gender ? "0 0 0 3px rgba(239, 68, 68, 0.1)" : "none"
             }}
           >
             <option value="">Select Gender</option>
@@ -926,11 +943,12 @@ const Register = ({ onRegister }) => {
             <option value="Prefer not to Say">Prefer not to Say</option>
             <option value="Others">Others</option>
           </select>
+          {errors.gender && <span style={registerStyles.errorText}>{errors.gender}</span>}
         </div>
 
         <div>
           <label htmlFor="mobile" style={registerStyles.label}>
-            Mobile Number
+            Mobile Number *
           </label>
           <input
             type="tel"
@@ -938,6 +956,7 @@ const Register = ({ onRegister }) => {
             placeholder="09123456789"
             value={formData.mobile}
             onChange={(e) => handleInputChange("mobile", e.target.value)}
+            required
             style={{
               ...registerStyles.input,
               ...(errors.mobile ? registerStyles.inputError : {}),
@@ -958,7 +977,7 @@ const Register = ({ onRegister }) => {
 
       <div style={registerStyles.formGroup}>
         <label htmlFor="location" style={registerStyles.label}>
-          Location
+          Location *
         </label>
         <input
           type="text"
@@ -966,15 +985,22 @@ const Register = ({ onRegister }) => {
           placeholder="City, Country"
           value={formData.location}
           onChange={(e) => handleInputChange("location", e.target.value)}
-          style={registerStyles.input}
+          required
+          style={{
+            ...registerStyles.input,
+            ...(errors.location ? registerStyles.inputError : {}),
+          }}
           onFocus={(e) => {
-            Object.assign(e.target.style, registerStyles.inputFocus)
+            if (!errors.location) {
+              Object.assign(e.target.style, registerStyles.inputFocus)
+            }
           }}
           onBlur={(e) => {
-            e.target.style.borderColor = "#d1d5db"
-            e.target.style.boxShadow = "none"
+            e.target.style.borderColor = errors.location ? "#ef4444" : "#d1d5db"
+            e.target.style.boxShadow = errors.location ? "0 0 0 3px rgba(239, 68, 68, 0.1)" : "none"
           }}
         />
+        {errors.location && <span style={registerStyles.errorText}>{errors.location}</span>}
       </div>
 
       <div style={registerStyles.formGroup}>
