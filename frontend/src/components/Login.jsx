@@ -717,11 +717,8 @@ const Login = ({ onLogin }) => {
 
           <div style={loginStyles.divider}>
             <div style={loginStyles.dividerLine}></div>
-            <span style={loginStyles.dividerText}>OR CONTINUE WITH</span>
             <div style={loginStyles.dividerLine}></div>
           </div>
-
-          <SocialLogin />
 
           <div style={loginStyles.authFooter}>
             <p>
