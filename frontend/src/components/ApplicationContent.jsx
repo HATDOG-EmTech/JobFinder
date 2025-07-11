@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useTheme } from "../App"
 import { applicationAPI } from "../api/auth"
 import api from "../api"
+import JobDetailsModal from "./JobDetailsModal"
 
 function ApplicationsContent() {
   const [searchQuery, setSearchQuery] = useState("")
@@ -16,6 +17,10 @@ function ApplicationsContent() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [apiErrors, setApiErrors] = useState([]) // Track API errors for debugging
+
+  // Modal state
+  const [selectedJob, setSelectedJob] = useState(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
 
   // Unified typography system
   const typography = {
@@ -556,6 +561,42 @@ function ApplicationsContent() {
     return jobData
   }
 
+  // Modal handlers
+  const handleViewJobDetails = (app) => {
+    const jobData = getJobData(app)
+
+    // Create a job object that matches the modal's expected format
+    const jobForModal = {
+      id: app.job || app.id,
+      job_title: jobData.job_title,
+      job_company: jobData.job_company,
+      job_location: jobData.job_location,
+      job_type: jobData.job_type,
+      job_setup: jobData.job_setup,
+      min_salary: jobData.min_salary,
+      max_salary: jobData.max_salary,
+      job_description: jobData.job_description,
+      job_requirements: jobData.job_requirements,
+      job_benefits: jobData.job_benefits,
+      created_at: app.date, // Use application date as fallback
+      status: "Active",
+    }
+
+    setSelectedJob(jobForModal)
+    setIsModalOpen(true)
+  }
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false)
+    setSelectedJob(null)
+  }
+
+  const handleApplyFromModal = () => {
+    // Since user already applied, we don't need to do anything
+    // This function exists to satisfy the modal's interface
+    console.log("User has already applied to this job")
+  }
+
   const getStatusCounts = () => {
     console.log("Calculating status counts for applications:", applications)
 
@@ -923,11 +964,11 @@ function ApplicationsContent() {
                     </p>
 
                     <div style={applicationsStyles.actions}>
-                      <button style={{ ...applicationsStyles.button, ...applicationsStyles.primaryButton }}>
+                      <button
+                        style={{ ...applicationsStyles.button, ...applicationsStyles.primaryButton }}
+                        onClick={() => handleViewJobDetails(app)}
+                      >
                         View Job Details
-                      </button>
-                      <button style={{ ...applicationsStyles.button, ...applicationsStyles.secondaryButton }}>
-                        Withdraw Application
                       </button>
                     </div>
                   </div>
@@ -946,6 +987,16 @@ function ApplicationsContent() {
           })
         )}
       </div>
+
+      {/* Job Details Modal */}
+      <JobDetailsModal
+        job={selectedJob}
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        onApply={handleApplyFromModal}
+        isApplying={false}
+        hasApplied={true} // Always true since this is from applications list
+      />
     </div>
   )
 }

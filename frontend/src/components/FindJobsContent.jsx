@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useTheme } from "../App"
 import { jobAPI, applicationAPI } from "../api/auth"
+import JobDetailsModal from "./JobDetailsModal"
 
 function FindJobsContent({ user }) {
   const [searchQuery, setSearchQuery] = useState("")
@@ -15,6 +16,9 @@ function FindJobsContent({ user }) {
   const [applyingJobs, setApplyingJobs] = useState(new Set())
   const [appliedJobs, setAppliedJobs] = useState(new Set())
   const { isDark } = useTheme()
+
+  const [selectedJob, setSelectedJob] = useState(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
 
   // Fetch jobs and user applications from API
   useEffect(() => {
@@ -90,6 +94,18 @@ function FindJobsContent({ user }) {
         return newSet
       })
     }
+  }
+
+  // Handle opening job details modal
+  const handleViewDetails = (job) => {
+    setSelectedJob(job)
+    setIsModalOpen(true)
+  }
+
+  // Handle closing job details modal
+  const handleCloseModal = () => {
+    setIsModalOpen(false)
+    setSelectedJob(null)
   }
 
   // Dark theme colors - consistent with other components
@@ -813,6 +829,7 @@ function FindJobsContent({ user }) {
                         }}
                         onMouseEnter={() => setHoveredButton(`details-${job.id}`)}
                         onMouseLeave={() => setHoveredButton(null)}
+                        onClick={() => handleViewDetails(job)}
                       >
                         View Details
                       </button>
@@ -839,6 +856,15 @@ function FindJobsContent({ user }) {
           })
         )}
       </div>
+      {/* Job Details Modal */}
+      <JobDetailsModal
+        job={selectedJob}
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        onApply={handleApplyForJob}
+        isApplying={applyingJobs.has(selectedJob?.id)}
+        hasApplied={appliedJobs.has(selectedJob?.id)}
+      />
     </div>
   )
 }

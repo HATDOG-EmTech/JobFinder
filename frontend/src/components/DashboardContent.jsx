@@ -595,18 +595,6 @@ function DashboardContent({ user, onJobsUpdate }) {
       justifyContent: "flex-end",
       alignItems: "center",
     },
-    statusSelect: {
-      padding: "6px 12px",
-      borderRadius: "6px",
-      border: `1px solid ${colors.border}`,
-      backgroundColor: colors.cardBackground,
-      color: colors.text,
-      fontSize: "0.875rem",
-      cursor: "pointer",
-      outline: "none",
-      boxShadow: "none",
-      marginRight: "12px",
-    },
     // Profile Modal Styles - Enhanced for dark mode
     profileModal: {
       position: "fixed",
@@ -1068,15 +1056,53 @@ function DashboardContent({ user, onJobsUpdate }) {
     }
   }
 
-  const handleAcceptApplicant = (jobId, applicationId) => {
-    handleStatusChange(jobId, applicationId, "Accepted")
-    alert("Applicant accepted! They have been notified.")
+  const handleAcceptApplicant = async (jobId, applicationId, currentStatus) => {
+    let newStatus
+    let confirmMessage
+    let successMessage
+
+    // Determine the new status based on current status
+    if (currentStatus === "Under Review") {
+      newStatus = "Interview"
+      confirmMessage = "Move this applicant to Interview stage?"
+      successMessage = "Applicant moved to Interview stage!"
+    } else if (currentStatus === "Interview") {
+      newStatus = "Accepted"
+      confirmMessage = "Accept this applicant for the position?"
+      successMessage = "Applicant accepted! They have been notified."
+    } else {
+      // For other statuses, show appropriate message
+      alert(
+        `Cannot accept applicant with status "${currentStatus}". Please update status to "Under Review" or "Interview" first.`,
+      )
+      return
+    }
+
+    // Confirm the action
+    if (window.confirm(confirmMessage)) {
+      try {
+        await handleStatusChange(jobId, applicationId, newStatus)
+        alert(successMessage)
+        // Close the modal after successful action
+        closeModal()
+      } catch (error) {
+        console.error("Error accepting applicant:", error)
+        alert("Failed to update applicant status. Please try again.")
+      }
+    }
   }
 
-  const handleRejectApplicant = (jobId, applicationId) => {
-    if (window.confirm("Are you sure you want to reject this applicant?")) {
-      handleStatusChange(jobId, applicationId, "Rejected")
-      alert("Applicant rejected. They have been notified.")
+  const handleRejectApplicant = async (jobId, applicationId) => {
+    if (window.confirm("Are you sure you want to reject this applicant? This action cannot be undone.")) {
+      try {
+        await handleStatusChange(jobId, applicationId, "Rejected")
+        alert("Applicant rejected. They have been notified.")
+        // Close the modal after successful action
+        closeModal()
+      } catch (error) {
+        console.error("Error rejecting applicant:", error)
+        alert("Failed to reject applicant. Please try again.")
+      }
     }
   }
 
@@ -1689,58 +1715,46 @@ function DashboardContent({ user, onJobsUpdate }) {
                       <strong>Applied:</strong> {new Date(applicant.date).toLocaleDateString()}
                     </div>
                   </div>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <div>
-                      <label style={{ ...dashboardStyles.label, marginRight: "8px" }}>Status:</label>
-                      <select
-                        value={applicant.status}
-                        onChange={(e) =>
-                          handleStatusChange(selectedJob.job_id, applicant.application_id, e.target.value)
-                        }
-                        style={dashboardStyles.statusSelect}
-                      >
-                        <option value="Applied">Applied</option>
-                        <option value="Under Review">Under Review</option>
-                        <option value="Interview">Interview</option>
-                        <option value="Accepted">Accepted</option>
-                        <option value="Rejected">Rejected</option>
-                      </select>
-                    </div>
 
-                    <div style={dashboardStyles.applicantActions}>
-                      <button
-                        style={{
-                          ...dashboardStyles.button,
-                          ...dashboardStyles.viewProfileButton,
-                        }}
-                        onClick={() => handleViewProfile(applicant)}
-                      >
-                        View Profile
-                      </button>
+                  <div style={dashboardStyles.applicantActions}>
+                    <button
+                      style={{
+                        ...dashboardStyles.button,
+                        ...dashboardStyles.viewProfileButton,
+                      }}
+                      onClick={() => handleViewProfile(applicant)}
+                    >
+                      View Profile
+                    </button>
 
-                      {applicant.status !== "Accepted" && applicant.status !== "Rejected" && (
-                        <>
-                          <button
-                            style={{
-                              ...dashboardStyles.button,
-                              ...dashboardStyles.acceptButton,
-                            }}
-                            onClick={() => handleAcceptApplicant(selectedJob.job_id, applicant.application_id)}
-                          >
-                            Accept
-                          </button>
-                          <button
-                            style={{
-                              ...dashboardStyles.button,
-                              ...dashboardStyles.rejectButton,
-                            }}
-                            onClick={() => handleRejectApplicant(selectedJob.job_id, applicant.application_id)}
-                          >
-                            Reject
-                          </button>
-                        </>
-                      )}
-                    </div>
+                    {(applicant.status === "Under Review" || applicant.status === "Interview") && (
+                      <>
+                        <button
+                          style={{
+                            ...dashboardStyles.button,
+                            ...dashboardStyles.acceptButton,
+                          }}
+                          onClick={() =>
+                            handleAcceptApplicant(selectedJob.job_id, applicant.application_id, applicant.status)
+                          }
+                        >
+                          {applicant.status === "Under Review"
+                            ? "Move to Interview"
+                            : applicant.status === "Interview"
+                              ? "Accept"
+                              : "Accept"}
+                        </button>
+                        <button
+                          style={{
+                            ...dashboardStyles.button,
+                            ...dashboardStyles.rejectButton,
+                          }}
+                          onClick={() => handleRejectApplicant(selectedJob.job_id, applicant.application_id)}
+                        >
+                          Reject
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
               ))
