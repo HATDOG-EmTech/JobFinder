@@ -12,8 +12,10 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from dotenv import load_dotenv
 import os
+import dj_database_url
 from pathlib import Path
 from datetime import timedelta
+
 
 load_dotenv()
 
@@ -26,12 +28,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-your-secret-key-here'
+SECRET_KEY = os.environ.get("SECRET_KEY")
+
+#django-insecure-6f3%i4!mxc2zpuow^7l1h$8ke#(k9l1$(sbh5v+%8qzmjs-9(2
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get("DEBUG", "False").lower() == "true"
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0']
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS").split(" ")
 
 
 # Application definition
@@ -91,7 +95,7 @@ DATABASES = {
     }
 }
 
-
+DATABASES["default"] = dj_database_url.parse("postgresql://jobfinder_django_render_user:Ujpuvynsn6UfjmaTQA2tEPAnNhzsh5QL@dpg-d1opqkodl3ps73fnjkq0-a.oregon-postgres.render.com/jobfinder_django_render")
 
 
 # Password validation
