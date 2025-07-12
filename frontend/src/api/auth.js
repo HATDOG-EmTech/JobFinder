@@ -1,5 +1,5 @@
 // API configuration and authentication functions
-const API_BASE_URL = "http://localhost:8000/api" // Adjust this to your Django server URL
+const API_BASE_URL = import.meta.env.VITE_API_URL // Adjust this to your Django server URL
 
 // Helper function to get CSRF token if needed
 const getCSRFToken = () => {
