@@ -15,7 +15,7 @@ const getCSRFToken = () => {
 
 // Helper function to make API requests
 const apiRequest = async (endpoint, options = {}) => {
-  const url = `${API_BASE_URL}${endpoint}`
+  const url = `${API_BASE_URL.replace(/\/$/, "")}${endpoint}`
   const token = localStorage.getItem("access_token")
 
   const defaultHeaders = {
