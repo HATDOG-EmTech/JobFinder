@@ -198,8 +198,9 @@ SIMPLE_JWT = {
 
 # CORS settings
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
+    "https://jobfinderph.vercel.app",
+    "http://localhost:3000",           # Keep this for local testing
+    "http://127.0.0.1:3000"
 ]
 
 CORS_ALLOW_CREDENTIALS = True
@@ -208,6 +209,7 @@ CORS_ALLOW_ALL_ORIGINS = DEBUG  # Only allow all origins in development
 
 # CSRF settings
 CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
+    "https://jobfinderph.vercel.app",
+    "http://localhost:3000",           # Keep this for local testing
+    "http://127.0.0.1:3000"
 ]
