@@ -95,8 +95,11 @@ DATABASES = {
     }
 }
 
-DATABASES["default"] = dj_database_url.parse("postgresql://jobfinder_django_render_user:Ujpuvynsn6UfjmaTQA2tEPAnNhzsh5QL@dpg-d1opqkodl3ps73fnjkq0-a.oregon-postgres.render.com/jobfinder_django_render")
+database_url = os.environ.get("DATABASE_URL")
+DATABASES["default"] = dj_database_url.parse(database_url)
 
+
+# postgresql://jobfinder_django_render_user:Ujpuvynsn6UfjmaTQA2tEPAnNhzsh5QL@dpg-d1opqkodl3ps73fnjkq0-a.oregon-postgres.render.com/jobfinder_django_render
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
