@@ -13,13 +13,13 @@ services:
       - key: PYTHONPATH
         value: .
       - key: SECRET_KEY
-        value: your-django-secret-key
+        value: af0c9496d132e2b23df6b3f2682c2cb9  
       - key: DEBUG
         value: false
       - key: ALLOWED_HOSTS
         value: jobfinder-backend.onrender.com
       - key: DATABASE_URL
-        value: your-database-url-here
+        value: postgresql://jobfinder_django_render_user:Ujpuvynsn6UfjmaTQA2tEPAnNhzsh5QL@dpg-d1opqkodl3ps73fnjkq0-a/jobfinder_django_render  
 
   - type: web
     name: jobfinder-frontend
